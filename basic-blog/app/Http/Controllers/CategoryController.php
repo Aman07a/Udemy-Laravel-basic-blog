@@ -19,8 +19,10 @@ class CategoryController extends Controller
         //     ->latest()->paginate(5);
 
         $categories = Category::latest()->paginate(5);
+        $trashCat = Category::onlyTrashed()->latest()->paginate(3);
+
         // $categories = DB::table('categories')->latest()->paginate(5);
-        return view('admin.category.index', compact('categories'));
+        return view('admin.category.index', compact('categories', 'trashCat'));
     }
 
     public function AddCat(Request $request)
@@ -58,23 +60,50 @@ class CategoryController extends Controller
 
     public function Edit($id)
     {
-        $categories = Category::find($id);
+        // $categories = Category::find($id);
+        $categories = DB::table('categories')->where('id', $id)->first();
         return view('admin.category.edit', compact('categories'));
     }
 
     public function Update(Request $request, $id)
     {
-        $update = Category::find($id)->update([
-            'category_name' => $request->category_name,
-            'user_id' => Auth::user()->id,
-            'updated_at' => Carbon::now(),
-        ]);
+        // $update = Category::find($id)->update([
+        //     'category_name' => $request->category_name,
+        //     'user_id' => Auth::user()->id,
+        //     'updated_at' => Carbon::now(),
+        // ]);
+
+        $data = array();
+        $data['category_name'] = $request->category_name;
+        $data['category_name'] = Auth::user()->id;
+        $data['created_at'] = Carbon::now();
+        DB::table('categories')->where('id', $id)->update($data);
 
         // Redirect
         return Redirect()->route('all.category')->with('success', 'Category Updated Successfull');
     }
 
-    public function Delete()
+    public function SoftDelete($id)
     {
+        $delete = Category::find($id)->delete();
+
+        // Redirect
+        return Redirect()->back()->with('success', 'Category Soft Delete Successfully');
+    }
+
+    public function Restore($id)
+    {
+        $restore = Category::withTrashed()->find($id)->restore();
+
+        // Redirect
+        return Redirect()->back()->with('success', 'Category Restored Successfully');
+    }
+
+    public function Pdelete($id)
+    {
+        $pdelete = Category::onlyTrashed()->find($id)->forceDelete();
+
+        // Redirect
+        return Redirect()->back()->with('success', 'Category Permanently Deleted');
     }
 }
