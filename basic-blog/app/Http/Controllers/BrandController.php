@@ -52,7 +52,6 @@ class BrandController extends Controller
 
     public function Edit($id)
     {
-        // $brands = Brand::find($id);
         $brands = DB::table('brands')->where('id', $id)->first();
         return view('admin.brand.edit', compact('brands'));
     }
@@ -103,13 +102,17 @@ class BrandController extends Controller
         }
     }
 
-    // public function SoftDelete($id)
-    // {
-    //     $delete = Brand::find($id)->delete();
+    public function Delete($id)
+    {
+        $image = Brand::find($id);
+        $old_image = $image->brand_image;
+        unlink($old_image);
 
-    //     // Redirect
-    //     return Redirect()->back()->with('success', 'Brand Soft Delete Successfully');
-    // }
+        Brand::find($id)->delete();
+
+        // Redirect
+        return Redirect()->back()->with('success', 'Brand Delete Successfully');
+    }
 
     // public function Restore($id)
     // {
