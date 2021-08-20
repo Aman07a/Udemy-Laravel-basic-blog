@@ -2,11 +2,14 @@
 
 namespace App\Http\Controllers;
 
+
 use App\Models\Brand;
+use App\Models\Multipic;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use Intervention\Image\Facades\Image;
 use Illuminate\Support\Facades\Redirect;
 
 class BrandController extends Controller
@@ -33,12 +36,17 @@ class BrandController extends Controller
 
         $brand_image = $request->file('brand_image');
 
-        $name_gen = hexdec(uniqid());
-        $img_text = strtolower($brand_image->getClientOriginalExtension());
-        $img_name = $name_gen . '.' . $img_text;
-        $up_location = 'image/brand/';
-        $last_img = $up_location . $img_name;
-        $brand_image->move($up_location, $img_name);
+        // $name_gen = hexdec(uniqid());
+        // $img_text = strtolower($brand_image->getClientOriginalExtension());
+        // $img_name = $name_gen . '.' . $img_text;
+        // $up_location = 'image/brand/';
+        // $last_img = $up_location . $img_name;
+        // $brand_image->move($up_location, $img_name);
+
+        $name_gen = hexdec(uniqid()) . '.' . $brand_image->getClientOriginalExtension();
+        Image::make($brand_image)->resize(300, 200)->save('image/brand/' . $name_gen);
+
+        $last_img = 'image/brand/' . $name_gen;
 
         Brand::insert([
             'brand_name' => $request->brand_name,
@@ -114,19 +122,32 @@ class BrandController extends Controller
         return Redirect()->back()->with('success', 'Brand Delete Successfully');
     }
 
-    // public function Restore($id)
-    // {
-    //     $restore = Brand::withTrashed()->find($id)->restore();
+    // This is for Multi Image All Methods
+    public function Multipic()
+    {
+        // $images = Multipic::all();
+        $images = DB::table('multipics')->latest()->paginate(5);
+        return view('admin.multipic.index', compact('images'));
+    }
 
-    //     // Redirect
-    //     return Redirect()->back()->with('success', 'Brand Restored Successfully');
-    // }
+    public function StoreImg(Request $request)
+    {
+        $image = $request->file('image');
 
-    // public function Pdelete($id)
-    // {
-    //     $pdelete = Brand::onlyTrashed()->find($id)->forceDelete();
+        foreach ($image as $multi_img) {
 
-    //     // Redirect
-    //     return Redirect()->back()->with('success', 'Brand Permanently Deleted');
-    // }
+            $name_gen = hexdec(uniqid()) . '.' . $multi_img->getClientOriginalExtension();
+            Image::make($multi_img)->resize(300, 200)->save('image/multi/' . $name_gen);
+
+            $last_img = 'image/multi/' . $name_gen;
+
+            Multipic::insert([
+                'image' => $last_img,
+                'created_at' => Carbon::now(),
+            ]);
+        } // End of the feoreach
+
+        // Redirect
+        return Redirect()->back()->with('success', 'Brand Inserted Successfully');
+    }
 }
